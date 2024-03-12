@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink } from '@angular/router';
 import {MatSidenavModule} from '@angular/material/sidenav';
@@ -6,6 +6,10 @@ import { ProductsHeaderComponent } from '../components-home/products-header/prod
 import { FiltersComponent } from '../components-home/filters/filters.component';
 import {MatGridListModule} from '@angular/material/grid-list';
 import { ProductBoxComponent } from '../components-home/product-box/product-box.component';
+import { CartService } from '../../services/cart.service';
+import { Product } from '../../models/product.model';
+import { Subscription } from 'rxjs';
+import { StoreService } from '../../services/store.service';
 
 
 const ROWS_HEIGHT:{[id:number]: number} = {1: 400, 3: 335, 4: 350};
@@ -27,19 +31,65 @@ const ROWS_HEIGHT:{[id:number]: number} = {1: 400, 3: 335, 4: 350};
   templateUrl: './home.component.html',
   styleUrl: './home.component.css'
 })
-export class HomeComponent {
+
+
+export class HomeComponent  implements OnInit, OnDestroy {
+
   @Input() fullWidthMode = false
   
-  category: string | undefined
   cols = 3;
-  rowHeigth = ROWS_HEIGHT[this.cols];
+  rowHeight: number = ROWS_HEIGHT[this.cols];
+  products: Array<Product> | undefined;
+  count = '12';
+  sort = 'desc';
+  category: string | undefined;
+  productsSubscription: Subscription | undefined;
+
+  constructor(private cartService: CartService, private storeService: StoreService){}
+
+  ngOnInit(): void {
+    this.getProducts();
+  }
+
+  getProducts(): void{
+    this.productsSubscription = this.storeService.getAllProducts(this.count, this.sort, this.category)
+    .subscribe((_products => this.products = _products));
+  }
 
   onColumnsCountChange(colsNum: number):void{
     this.cols = colsNum;
+    this.rowHeight = ROWS_HEIGHT[this.cols];
   }
 
   onShowCategory(newCategory: string):void{
     this.category = newCategory;
-    this.rowHeigth = ROWS_HEIGHT[this.cols];
+    this.getProducts();
+    
   }
+
+  onAddToCart(product: Product):void {
+    this.cartService.addToCart({
+      product: product.image, 
+      name: product.title,
+      price: product.price,
+      quantity: 1,
+      id: product.id,
+    });
+    }
+
+    onItemsCountChange(newCount: number): void {
+      this.count = newCount.toString();
+      this.getProducts();
+    }
+
+    onSortChange(newSort: string): void{
+      this.sort = newSort;
+      this.getProducts();
+    }
+
+    ngOnDestroy(): void {
+      if(this.productsSubscription){
+        this.productsSubscription.unsubscribe();
+      }
+    }
 }

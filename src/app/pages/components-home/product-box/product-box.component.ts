@@ -1,7 +1,8 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {MatCardModule} from '@angular/material/card';
 import {MatIconModule} from '@angular/material/icon';
+import { Product } from '../../../models/product.model';
 
 @Component({
   selector: 'app-product-box',
@@ -15,7 +16,15 @@ import {MatIconModule} from '@angular/material/icon';
   styleUrl: './product-box.component.css'
 })
 export class ProductBoxComponent {
-  @Input() fullWidthMode = false
+  @Input() fullWidthMode = false;
+  @Input() product: Product | undefined;
+  @Output() addToCart = new EventEmitter();
+
+  constructor() {}
+
+  onAddToCart(): void {
+    this.addToCart.emit(this.product);
+  }
   
 
 }
